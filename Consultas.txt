@@ -1,0 +1,60 @@
+-- 1 - O banco deseja saber todas as contas do tipo 'Conta Corrente' existente na base de dados.
+-- Listar conta(id, número, digito) e tipo(descricao).
+
+SELECT conta.id, conta.numero_conta, tipo_conta.descricao FROM conta
+LEFT JOIN tipo_conta ON conta.id_tipo_conta = tipo_conta.id
+WHERE tipo_conta.descricao = 'Conta Corrente';
+
+-- 2 - O banco deseja saber quais de seus clientes que residem na cidade de São Paulo.
+-- Listar cliente(nome, cpf), conta(agência, número e dígito).
+
+SELECT cliente.nome, cliente.cpf, cidade.descricao, conta.numero_conta FROM cliente
+LEFT JOIN conta ON conta.id_cliente = cliente.id
+LEFT JOIN agencia ON conta.id_agencia = agencia.id
+LEFT JOIN endereco ON agencia.id_endereco = endereco.id
+LEFT JOIN cidade ON endereco.id_cidade = cidade.id
+WHERE cidade.descricao = 'Sao Paulo';
+
+-- 3 - O banco deseja saber todas as operações que ocorreram no ano de 2022.
+-- Listar conta(agência, número e digito), operação(tipo, data, valor).
+
+SELECT agencia.nome, cidade.descricao, conta.numero_conta, 
+tipo_transacao.descricao, transacao.data, transacao.valor, 'Debito' origem
+FROM cliente
+JOIN conta ON conta.id_cliente = cliente.id
+JOIN agencia ON conta.id_agencia = agencia.id
+JOIN endereco ON agencia.id_endereco = endereco.id
+JOIN cidade ON endereco.id_cidade = cidade.id
+JOIN transacao ON transacao.id_conta_origem = conta.id
+JOIN tipo_transacao ON transacao.id_tipo_transacao = tipo_transacao.id
+WHERE transacao.data BETWEEN '2022-01-01 00:00:00' AND '2022-12-31 23:59:59'
+UNION ALL
+SELECT agencia.nome, cidade.descricao, conta.numero_conta, 
+tipo_transacao.descricao, transacao.data, transacao.valor, 'Credito' origem
+FROM cliente
+JOIN conta ON conta.id_cliente = cliente.id
+JOIN agencia ON conta.id_agencia = agencia.id
+JOIN endereco ON agencia.id_endereco = endereco.id
+JOIN cidade ON endereco.id_cidade = cidade.id
+JOIN transacao ON transacao.id_conta_destino = conta.id
+JOIN tipo_transacao ON transacao.id_tipo_transacao = tipo_transacao.id
+WHERE transacao.data BETWEEN '2022-01-01 00:00:00' AND '2022-12-31 23:59:59'
+
+
+-- 4 - O banco deseja saber quais as contas que não transacionaram (não houve operações) no ano de 2022.
+-- Listar cliente(nome, cpf), conta(agência, número, dígito).
+
+select cliente.nome, cliente.cpf, agencia.nome, conta.numero_conta
+from cliente
+inner join conta on cliente.id = conta.id_cliente
+inner join agencia on agencia.id = conta.id_agencia
+where not exists(
+	select * from transacao 
+	where date_trunc('year', transacao.data) = '2022-01-01 00:00:00' 
+	and transacao.id_conta_origem = conta.id) 
+and not exists (
+	select * from transacao 
+	where date_trunc('year', transacao.data) = '2022-01-01 00:00:00'
+	and transacao.id_conta_destino= conta.id)
+
+

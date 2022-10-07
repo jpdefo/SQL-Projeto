@@ -1,0 +1,29 @@
+-- -- 1 - O banco deseja saber qual o saldo atual das contas. Como as formas normais recomendam que o saldo não seja gravado, pois é
+-- um valor calculado, podemos trabalhar com uma view para atender essa necessidade. Então, para atender esse exercício, crie uma
+-- view chamada conta_saldo e nesta faça o calculo do saldo de cada conta. Lembre-se o saldo da conta é o soma de todas as operações
+-- que aconteceram.
+-- -- Listar cliente(nome, cpf), conta(agência, número, dígito) e o saldo disponível para essa.
+
+create view conta_saldo 
+as select cliente.nome, cliente.cpf, agencia.nome as agencia,
+conta.numero_conta as conta , sum(destino.valor) - sum(origem.valor) as saldo 
+from cliente 
+inner join conta on cliente.id = conta.id_cliente 
+inner join agencia on agencia.id = conta.id_agencia 
+left join transacao origem on origem.id_conta_origem = conta.id 
+left join transacao destino on destino.id_conta_destino = conta.id 
+group by cliente.nome, cliente.cpf, agencia.nome , conta.numero_conta
+
+
+-- -- 2 - O banco deseja ter um histórico de transações das contas. Já deve haver uma tabela de operações na base.
+-- Então crie uma view que exiba essas operações, não precisa exibir saldo da conta.
+-- -- Listar cliente(nome, cpf) conta(agência, número, dígito), transação(tipo, data, valor).
+
+CREATE VIEW historico_transacao
+AS SELECT cliente.nome, cliente.cpf, conta.id_agencia, conta.numero_conta, tipo_transacao.descricao, transacao.data, transacao.valor FROM cliente
+LEFT JOIN conta ON conta.id_cliente = cliente.id
+LEFT JOIN agencia ON conta.id_agencia = agencia.id
+LEFT JOIN endereco ON agencia.id_endereco = endereco.id
+LEFT JOIN cidade ON endereco.id_cidade = cidade.id
+LEFT JOIN transacao ON transacao.id_conta_origem = conta.id OR transacao.id_conta_destino = conta.id
+LEFT JOIN tipo_transacao ON transacao.id_tipo_transacao = tipo_transacao.id;
